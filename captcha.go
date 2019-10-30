@@ -1,13 +1,8 @@
 package captcha
 
 import (
-	"errors"
-	"strconv"
+	"fmt"
 )
-
-var ErrFormatNotSupport = errors.New("format is not support")
-var ErrOperatorNotSupport = errors.New("operator is not support")
-var ErrNumberToText = errors.New("cannot convert number to text")
 
 var operatorMap = map[int]string{
 	0: "+",
@@ -34,53 +29,21 @@ type captcha struct {
 	rightOperand int
 }
 
-func (c captcha) captcha() (string, error) {
-	if c.format != 0 && c.format != 1 {
-		return "", ErrFormatNotSupport
+func (c captcha) captcha() string {
+	operator := c.getOperator()
+
+	var formatCaptcha = map[int]string{
+		0: fmt.Sprintf("%d %s %s", c.leftOperand, operator, getNumberToText(c.rightOperand)),
+		1: fmt.Sprintf("%s %s %d", getNumberToText(c.leftOperand), operator, c.rightOperand),
 	}
 
-	operator, err := c.getOperator()
-	if err != nil {
-		return "", err
-	}
-
-	leftOperand := strconv.Itoa(c.leftOperand)
-	rightOperand := strconv.Itoa(c.rightOperand)
-
-	if c.format == 0 {
-		rightOperand, err = getNumberToText(c.rightOperand)
-		if err != nil {
-			return "", err
-		}
-
-	} else if c.format == 1 {
-		leftOperand, err = getNumberToText(c.leftOperand)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return display(leftOperand, operator, rightOperand), nil
+	return formatCaptcha[c.format]
 }
 
-func (c captcha) getOperator() (string, error) {
-	v, ok := operatorMap[c.operator]
-	if !ok {
-		return "", ErrOperatorNotSupport
-	}
-
-	return v, nil
+func (c captcha) getOperator() string {
+	return operatorMap[c.operator]
 }
 
-func getNumberToText(num int) (string, error) {
-	v, ok := numberToText[num]
-	if !ok {
-		return "", ErrNumberToText
-	}
-
-	return v, nil
-}
-
-func display(left, operator, right string) string {
-	return left + " " + operator + " " + right
+func getNumberToText(num int) string {
+	return numberToText[num]
 }
