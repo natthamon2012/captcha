@@ -2,61 +2,65 @@ package captcha
 
 import (
 	"errors"
+	"strconv"
 )
 
 var ErrFormatNotSupport = errors.New("format is not support")
 var ErrOperatorNotSupport = errors.New("operator is not support")
 var ErrNumberToText = errors.New("cannot convert number to text")
 
-var operatorMap = map[string]string{
-	"0": "+",
-	"1": "-",
-	"2": "*",
+var operatorMap = map[int]string{
+	0: "+",
+	1: "-",
+	2: "*",
 }
 
-var numberToText = map[string]string{
-	"1": "one",
-	"2": "two",
-	"3": "three",
-	"4": "four",
-	"5": "five",
-	"6": "six",
-	"7": "seven",
-	"8": "eight",
-	"9": "nine",
+var numberToText = map[int]string{
+	1: "one",
+	2: "two",
+	3: "three",
+	4: "four",
+	5: "five",
+	6: "six",
+	7: "seven",
+	8: "eight",
+	9: "nine",
 }
 
 type captcha struct {
-	format       string
-	leftOperand  string
-	operator     string
-	rightOperand string
+	format       int
+	leftOperand  int
+	operator     int
+	rightOperand int
 }
 
 func (c captcha) captcha() (string, error) {
-	if c.format != "0" && c.format != "1" {
+	if c.format != 0 && c.format != 1 {
 		return "", ErrFormatNotSupport
 	}
 
-	var err error
-	c.operator, err = c.getOperator()
+	operator, err := c.getOperator()
 	if err != nil {
 		return "", err
 	}
 
-	if c.format == "0" {
-		c.rightOperand, err = getNumberToText(c.rightOperand)
+	leftOperand := strconv.Itoa(c.leftOperand)
+	rightOperand := strconv.Itoa(c.rightOperand)
+
+	if c.format == 0 {
+		rightOperand, err = getNumberToText(c.rightOperand)
 		if err != nil {
 			return "", err
 		}
-	} else if c.format == "1" {
-		c.leftOperand, err = getNumberToText(c.leftOperand)
+
+	} else if c.format == 1 {
+		leftOperand, err = getNumberToText(c.leftOperand)
 		if err != nil {
 			return "", err
 		}
 	}
 
-	return c.displayCaptcha(), nil
+	return display(leftOperand, operator, rightOperand), nil
 }
 
 func (c captcha) getOperator() (string, error) {
@@ -68,7 +72,7 @@ func (c captcha) getOperator() (string, error) {
 	return v, nil
 }
 
-func getNumberToText(num string) (string, error) {
+func getNumberToText(num int) (string, error) {
 	v, ok := numberToText[num]
 	if !ok {
 		return "", ErrNumberToText
@@ -77,6 +81,6 @@ func getNumberToText(num string) (string, error) {
 	return v, nil
 }
 
-func (c captcha) displayCaptcha() string {
-	return c.leftOperand + " " + c.operator + " " + c.rightOperand
+func display(left, operator, right string) string {
+	return left + " " + operator + " " + right
 }
